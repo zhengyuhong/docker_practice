@@ -16,7 +16,7 @@ bin    dev    etc    home   lib    lib64  proc   root   sys    tmp    usr    var
 / # touch FLAG
 ```
 
-在容器内部执行````touch FLAG````，并如下获取容器内部的文件系统路径，在宿主机进入容器内部的busybox文件系统，````ls````即可看到刚刚创建的````FLAG````文件，由此可见容器的文件系统是挂载在宿主机文件系统中。
+在容器内部执行````touch FLAG````，并如下获取容器内部的文件系统路径，在宿主机进入容器内部的`busybox`文件系统，````ls````即可看到刚刚创建的````FLAG````文件，由此可见容器的文件系统是挂载在宿主机文件系统中。
 
 ```shell
 $docker inspect busybox|grep MergedDir
