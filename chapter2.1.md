@@ -31,7 +31,7 @@ bin  dev  etc  FLAG  home  lib  lib64  proc  root  sys  tmp  usr  var
 
 ## chroot
 
-每一个容器都有一套独立的文件系统，我们还是以`busybox`为例子，这里不打算重新编译生成`busybox`文件系统，我们直接通过`docker save`命令导出镜像`busybox:glibc`内部的文件系统
+每一个容器都有一套独立文件系统，我们还是以`busybox`为例子，这里不打算重新编译生成`busybox`文件系统，我们直接通过`docker save`命令导出镜像`busybox:glibc`内部的文件系统
 
 ```shell
 root@zhengyuhong docker save busybox:glibc -o busybox.tar
@@ -57,7 +57,7 @@ bin  dev  etc  home  lib  lib64  root  tmp  usr  var
 
 现在我们已经得到busybox的文件系统，存放在fs目录，通过`chroot`可以实现`docker container run busybox:glibc sh`的功能。
 
->**chroot **命令用来在指定的根目录下运行指令。chroot，即 change root directory （更改 root 目录）。在 linux 系统中，系统默认的目录结构都是以/，即是以根 (root) 开始的。而在使用 chroot 之后，系统的目录结构将以指定的位置作为/位置。
+>chroot 命令用来在指定的根目录下运行指令。chroot，即 change root directory （更改 root 目录）。在 linux 系统中，系统默认的目录结构都是以/，即是以根 (root) 开始的。而在使用 chroot 之后，系统的目录结构将以指定的位置作为/位置。
 >
 >在经过 chroot 命令之后，系统读取到的目录和文件将不在是旧系统根下的而是新根下（即被指定的新的位置）的目录结构和文件
 
