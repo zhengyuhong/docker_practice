@@ -9,8 +9,8 @@
 > busybox:glibc 支持glibc的极简Linux镜像
 
 ```shell
-root@zhengyuhong docker pull busybox:glibc
-root@zhengyuhong docker container run -it --name busybox busybox:glibc sh
+docker pull busybox:glibc
+docker container run -it --name busybox busybox:glibc sh
 / # ls
 bin    dev    etc    home   lib    lib64  proc   root   sys    tmp    usr    var
 / # touch FLAG
@@ -19,13 +19,13 @@ bin    dev    etc    home   lib    lib64  proc   root   sys    tmp    usr    var
 在容器内部执行````touch FLAG````，并如下获取容器内部的文件系统路径，在宿主机进入容器内部的`busybox`文件系统，````ls````即可看到刚刚创建的````FLAG````文件，由此可见容器的文件系统是挂载在宿主机文件系统中。
 
 ```shell
-$docker inspect busybox|grep MergedDir
+docker inspect busybox|grep MergedDir
                 "MergedDir": "/var/lib/docker/overlay2/2accf1290c8354faf205d4d0f7e1fb3e109d3c9d58c2fa2e470e06698aea9152/merged"
 ```
 
 ````shell
-root@zhengyuhong cd /var/lib/docker/overlay2/2accf1290c8354faf205d4d0f7e1fb3e109d3c9d58c2fa2e470e06698aea9152/merged
-root@zhengyuhong ls
+cd /var/lib/docker/overlay2/2accf1290c8354faf205d4d0f7e1fb3e109d3c9d58c2fa2e470e06698aea9152/merged
+ls
 bin  dev  etc  FLAG  home  lib  lib64  proc  root  sys  tmp  usr  var
 ````
 
@@ -34,9 +34,9 @@ bin  dev  etc  FLAG  home  lib  lib64  proc  root  sys  tmp  usr  var
 每一个容器都有一套独立文件系统，我们还是以`busybox`为例子，这里不打算重新编译生成`busybox`文件系统，我们直接通过`docker save`命令导出镜像`busybox:glibc`内部的文件系统
 
 ```shell
-root@zhengyuhong docker save busybox:glibc -o busybox.tar
-root@zhengyuhong tar xf busybox.tar
-[root@zhengyuhong busybox]# tree -L 2
+docker save busybox:glibc -o busybox.tar
+tar xf busybox.tar
+tree -L 2
 .
 ├── a046d8e2afb014ba30903e32d369802841c42345893ea1e4debbb51f201dc9c0
 │   ├── json
@@ -48,10 +48,10 @@ root@zhengyuhong tar xf busybox.tar
 └── repositories
 
 1 directory, 7 files
-root@zhengyuhong mkdir fs
-root@zhengyuhong cd fs
-root@zhengyuhong tar xf ../*/layer.tar
-root@zhengyuhong ls
+mkdir fs
+cd fs
+tar xf ../*/layer.tar
+ls
 bin  dev  etc  home  lib  lib64  root  tmp  usr  var
 ```
 
