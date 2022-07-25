@@ -1,4 +1,4 @@
-# 独立文件系统
+# 2.1 独立文件系统
 
 ## BusyBox
 
@@ -67,3 +67,29 @@ Usage: chroot [OPTION] NEWROOT [COMMAND [ARG]...]
 ```
 
 进入上述fs目录后执行，`chroot . sh`即可切换根目录，实现容器文件系统隔离，每一个容器拥有独立的文件系统环境。
+
+## pivot_root
+
+除了 `chroot`，Linux 还提供了 `pivot_root` 系统调用能够将把整个根文件系统（**rootfs**）切换到一个新的根目录。
+
+- **chroot**，把当前进程切换到新的根目录，类似创建一个沙盒，让当前进程运行在沙盒之内，其他进程运行在原有根文件系统下。
+- **pivot_root**，把整个根文件系统（**rootfs**）切换到一个新的根目录，移除对原有根文件系统的依赖，以便于对原有根文件系统进行`umount`操作。
+
+相比 `chroot`，`pivot_root` 系统调用配合`Mount Namspace` 更加安全，Docker容器运行时会优先使用这种方式，但 `chroot` 也是一种可选的方式。在 `runC` 的实现中有以下代码片段：
+
+```
+if config.NoPivotRoot {
+		err = msMoveRoot(config.Rootfs)
+	} else if config.Namespaces.Contains(configs.NEWNS) {
+		err = pivotRoot(config.Rootfs)
+	} else {
+		err = chroot()
+	}
+```
+
+第一行是由用户指定的「不切换根目录」的选择分支，其余分支代表两种切换根目录的方式：
+
+- 如果创建了新的 `Mount Namespace` ，将使用 `pivot_root` 系统调用。
+- 如果没有创建新的 `Mount Namespace`，直接使用 `chroot` 。
+
+关于使用`pivot_root` 切换根文件系统，会在下一章引入`Namespace`后展开叙述，本章节就以`chroot`作为文件系统隔离实现方案。
