@@ -44,7 +44,7 @@ tar xf ../800bc5af689f6e976edc015154816444229bb7b68c40503d3d5b35df09fd5f7e/layer
 
 ```
 mkdir /root/ubuntu/python # 存放增量的python文件系统，初始化为空目录
-mkdir /root/ubuntu/fs-python # 存放基础文件系统fs + 增量python文件系统的联合文件系统
+mkdir /root/ubuntu/fs-python # 挂载基础文件系统fs + 增量python文件系统的联合文件系统
 mkdir /root/ubuntu/fs-python-work # 用于存放挂载后的临时文件和间接文件
 ```
 
@@ -106,7 +106,7 @@ du -sh *
 
 ```
 mkdir /root/ubuntu/go # 存放增量的go文件系统，初始化为空目录
-mkdir /root/ubuntu/fs-go # 存放基础文件系统fs + 增量go文件系统的联合文件系统
+mkdir /root/ubuntu/fs-go # 挂载基础文件系统fs + 增量go文件系统的联合文件系统
 mkdir /root/ubuntu/fs-go-work # 用于存放挂载后的临时文件和间接文件
 ```
 
@@ -173,7 +173,7 @@ du -sh *
 ```
 cd /root/ubuntu
 mkdir /root/ubuntu/go_python # 存放增量的python文件系统，初始化为空目录
-mkdir /root/ubuntu/fs-go_python # 存放基础文件系统fs + 增量python文件系统的联合文件系统
+mkdir /root/ubuntu/fs-go_python # 挂载基础文件系统fs + 增量go文件系统 + 增量python文件系统的联合文件系统
 mkdir /root/ubuntu/fs-go_python-work # 用于存放挂载后的临时文件和间接文件
 ```
 
