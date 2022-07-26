@@ -2,7 +2,7 @@
 
 ## unshare
 
-进入第2章第2节提及的`/root/ubuntu/fs-go`联合挂载点，切换根文件系统
+进入第2.2节提及的`/root/ubuntu/fs-go`联合挂载点，切换根文件系统
 
 ```
 cd /root/ubuntu/fs-go
@@ -82,3 +82,4 @@ mount # 打印输出只与当前根文件系统相关的挂载目录
 ```
 
 >Linux 提供了一种方式，不直接卸载整个挂载点，而是将挂载点从当前的目录树中脱离（detach），此时所有程序都不再能够通过这个路径来访问该挂载点下的内容，但已经打开的文件描述符等则不受影响。这被称作「懒惰卸载」（lazy unmounting），对应的命令是 `umount -l <path>`。请自行查阅资料（如 [umount(8)](http://man7.org/linux/man-pages/man8/syscall.8.html) 等）。正确隐藏主机的根文件系统后，`/put_old` 应该为一个空目录，此时你可以将它删除（使用 `rmdir /put_old` 即可）
+
