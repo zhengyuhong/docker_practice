@@ -72,8 +72,8 @@ Usage: chroot [OPTION] NEWROOT [COMMAND [ARG]...]
 
 除了 `chroot`，Linux 还提供了 `pivot_root` 系统调用能够将把整个根文件系统（**rootfs**）切换到一个新的根目录。
 
-- **chroot**，把当前进程切换到新的根目录，类似创建一个沙盒，让当前进程运行在沙盒之内，其他进程运行在原有根文件系统下。
-- **pivot_root**，把整个根文件系统（**rootfs**）切换到一个新的根目录，移除对原有根文件系统的依赖，以便于对原有根文件系统进行`umount`操作。
+- **chroot**，把当前进程切换到新的根目录，类似创建一个沙盒，让当前进程运行在沙盒之内，其他进程运行在旧根文件系统下。
+- **pivot_root**，把整个根文件系统（**rootfs**）切换到一个新的根目录，移除对旧根文件系统的依赖，以便于对旧根文件系统进行`umount`操作。
 
 相比 `chroot`，`pivot_root` 系统调用配合`Mount Namspace` 更加安全，Docker容器运行时会优先使用这种方式，但 `chroot` 也是一种可选的方式。在 `runC` 的实现中有以下代码片段：
 
@@ -92,4 +92,11 @@ if config.NoPivotRoot {
 - 如果创建了新的 `Mount Namespace` ，将使用 `pivot_root` 系统调用。
 - 如果没有创建新的 `Mount Namespace`，直接使用 `chroot` 。
 
-关于使用`pivot_root` 切换根文件系统，会在下一章引入`Namespace`后展开叙述，本章节就以`chroot`作为文件系统隔离实现方案。
+关于使用`pivot_root` 切换根文件系统，会在下一章`Namespace`引入`Mount Namespace`后展开叙述，本章节就以`chroot`作为文件系统隔离实现方案。
+
+
+
+
+
+
+
