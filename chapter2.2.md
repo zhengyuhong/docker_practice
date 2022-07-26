@@ -66,6 +66,7 @@ overlay on /root/ubuntu/fs-python type overlay (rw,relatime,lowerdir=/root/ubunt
 ```shell
 cd /root/ubuntu/fs-python
 chroot .
+mount -t proc proc /proc
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 cat <<EOF > /etc/apt/sources.list
 deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
@@ -121,6 +122,7 @@ overlay on /root/ubuntu/fs-go type overlay (rw,relatime,lowerdir=/root/ubuntu/fs
 ```
 cd /root/ubuntu/fs-go
 chroot .
+mount -t proc proc /proc
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 cat <<EOF > /etc/apt/sources.list
 deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
@@ -190,6 +192,7 @@ overlay on /root/ubuntu/fs-go_python type overlay (rw,relatime,lowerdir=/root/ub
 ```
 cd /root/ubuntu/fs-go_python
 chroot .
+mount -t proc proc /proc
 apt-get install python
 ```
 
