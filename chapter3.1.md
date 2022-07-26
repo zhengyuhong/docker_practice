@@ -1,0 +1,84 @@
+# 3.1 Mount Namespace
+
+## unshare
+
+进入第2章第2节提及的`/root/ubuntu/fs-go`联合挂载点，切换根文件系统
+
+```
+cd /root/ubuntu/fs-go
+chroot .
+mount # 打印输出只与当前根文件系统相关的挂载目录，不继承复制旧根文件系统挂载目录
+```
+
+在 `/mnt` 目录下创建一个目录。使用 mount 命令挂载一个 tmpfs 类型的目录。
+
+```
+mkdir -p /mnt/tmpfs
+mount -t tmpfs -o size=20m tmpfs /mnt/tmpfs
+```
+
+执行完上述命令后，另外新打开一个命令行窗口上查看已挂载的目录信息，可见新根文件系统与旧根文件系统的挂载信息并没有完全隔离，新根文件系统的挂载操作影响旧根文件系统的挂载目录。
+
+```
+mount | grep "/mnt/tmpfs"
+tmpfs on /root/ubuntu/fs-go/mnt/tmpfs type tmpfs (rw,relatime,size=20480k)
+```
+
+**Mount Namespace** 是 Linux 内核实现的第一个 Namespace，从内核的 2.4.19 版本开始加入。它可以用来隔离不同的进程或进程组看到的挂载点。可以实现在不同的进程中看到不同的挂载目录。使用 Mount Namespace 可以实现容器内只能看到自己的挂载信息，在容器内的挂载操作不会影响主机的挂载目录。
+
+使用以下命令创建一个 bash 进程并且新建一个 Mount Namespace
+
+```
+unshare --mount --fork /bin/bash
+```
+
+执行完上述命令后，这时我们已经在主机上创建了一个新的 Mount Namespace，并且当前命令行窗口加入了新创建的 Mount Namespace。下面我通过一个例子来验证下，在独立的 Mount Namespace 内创建挂载目录是不影响主机的挂载目录。
+
+在 `/mnt` 下创建一个目录，使用 mount 命令挂载一个 tmpfs 类型的目录。
+
+```
+mkdir /mnt/tmpfs
+mount -t tmpfs -o size=40m tmpfs /mnt/tmpfs
+```
+
+使用`mount`命令查看一下已经挂载的目录信息：
+
+```
+mount | grep "/mnt/tmpfs"
+tmpfs on /mnt/tmpfs type tmpfs (rw,relatime,size=40960k)
+```
+
+可以看到 `/mnt/tmpfs` 目录已经被正确挂载。为了验证主机上并没有挂载此目录，我们新打开一个命令行窗口，同样执行 `mount` 命令查看主机的挂载信息并没有挂载 `/mnt/tmpfs`，可见我们独立的 Mount Namespace 中执行 mount 操作并不会影响主机。
+
+## chroot
+
+从上文可知，使用`chroot`切换根文件系统后，新根文件系统不继承复制旧根文件系统挂载目录，但是在新根文件系统进行挂载会影响旧根文件系统，此时只需要再创建一个Mount Namespace即可隔离新旧文件系统，完整操作如下所示。
+
+```
+cd /root/ubuntu/fs-go
+chroot . # 切换新根文件系统
+mount # 打印输出只与当前根文件系统相关的挂载目录，不继承复制旧根文件系统挂载目录
+unshare --mount --fork /bin/bash # 新建一个 Mount Namespace
+```
+
+## pivot_root
+
+`unshare --mount --fork /bin/bash` 新建Mount Namespace会继承复制旧Namespace的挂载目录信息，但umount操作并不影响旧根文件系统。
+
+```shell
+unshare --mount --fork /bin/bash
+mount # 打印输出旧Namespace的挂载目录信息
+```
+
+除了 `chroot`，Linux 还提供了 `pivot_root` 系统调用能够将把整个根文件系统（**rootfs**）切换到一个新的根目录，结合`unshare`、`pivot_root`、`umount -l`实现根文件系统切换和隔离
+
+```
+unshare --mount --fork /bin/bash # 新建一个命名空间
+mkdir -p /root/ubuntu/fs-go/put_old # 用于挂载旧根文件系统
+pivot_root /root/ubuntu/fs-go/ /root/ubuntu/fs-go/put_old # 切换根文件系统
+umount -l /root/ubuntu/fs-go/put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
+rmdir /put_old # 删除空目录
+mount # 打印输出只与当前根文件系统相关的挂载目录
+```
+
+>Linux 提供了一种方式，不直接卸载整个挂载点，而是将挂载点从当前的目录树中脱离（detach），此时所有程序都不再能够通过这个路径来访问该挂载点下的内容，但已经打开的文件描述符等则不受影响。这被称作「懒惰卸载」（lazy unmounting），对应的命令是 `umount -l <path>`。请自行查阅资料（如 [umount(8)](http://man7.org/linux/man-pages/man8/syscall.8.html) 等）。正确隐藏主机的根文件系统后，`/put_old` 应该为一个空目录，此时你可以将它删除（使用 `rmdir /put_old` 即可）
