@@ -1,6 +1,6 @@
 # 3.1 Mount Namespace
 
-## unshare
+## namespace
 
 进入第2.2节提及的`/root/ubuntu/fs-go`联合挂载点，切换根文件系统
 
@@ -70,7 +70,7 @@ unshare --mount --fork /bin/bash
 mount # 打印输出旧Namespace的挂载目录信息
 ```
 
-除了 `chroot`，Linux 还提供了 `pivot_root` 系统调用能够将把整个根文件系统（**rootfs**）切换到一个新的根目录，结合`unshare`、`pivot_root`、`umount -l`实现根文件系统切换和隔离
+除了 `chroot`，Linux 还提供了 `pivot_root` 系统调用能够将把整个根文件系统切换到一个新的根目录，结合`unshare`、`pivot_root`、`umount -l`实现根文件系统切换和隔离
 
 ```
 unshare --mount --fork /bin/bash # 新建一个命名空间
