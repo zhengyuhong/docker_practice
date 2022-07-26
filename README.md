@@ -11,5 +11,6 @@
   - 第2.2节 [联合文件系统](chapter2.2.md)
 - 第3章 [Linux Namespace](chapter3.md)
   - 第3.1节 [Mount Namespace](chapter3.1.md)
+  - 第3.2节 [PID Namespace](chapter3.2.md)
 - 第4章
 - 第5章
