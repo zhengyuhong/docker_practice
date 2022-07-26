@@ -7,8 +7,9 @@
 # 目录
 
 - 第2章 [文件系统](chapter2.md)
-  - 第1节 [独立文件系统](chapter2.1.md)
-  - 第2节 [联合文件系统](chapter2.2.md)
-- 第3章
+  - 第2.1节 [独立文件系统](chapter2.1.md)
+  - 第2.2节 [联合文件系统](chapter2.2.md)
+- 第3章 [Linux Namespace](chapter3.md)
+  - 第3.1节 [Mount Namespace](chapter3.1.md)
 - 第4章
 - 第5章
