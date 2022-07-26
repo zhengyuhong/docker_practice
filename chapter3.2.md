@@ -16,7 +16,7 @@ root@7f1b338325d2:/# ps
 
 > 容器文件系统仅提供用户空间隔离，容器文件系统与主机文件系统共享相同的内核。
 
-由于ID为1的进程的特殊性，所以每个PID namespace的第一个进程的ID都是1。当这个进程运行停止后，内核将会给这个namespace里的所有其他进程发送SIGKILL信号，致使其他所有进程都停止，于是namespace被销毁掉。
+由于PID为1的进程的特殊性，所以每个PID namespace的第一个进程的PID都是1。当这个进程运行停止后，内核将会给这个namespace里的所有其他进程发送SIGKILL信号，致使其他所有进程都停止，于是namespace被销毁掉。
 
 ## PID Namespace
 
