@@ -76,7 +76,7 @@ mount # 打印输出旧Namespace的挂载目录信息
 unshare --mount --fork /bin/bash # 新建一个命名空间
 mkdir -p /root/ubuntu/fs-go/put_old # 用于挂载旧根文件系统
 pivot_root /root/ubuntu/fs-go/ /root/ubuntu/fs-go/put_old # 切换根文件系统
-umount -l /root/ubuntu/fs-go/put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
+umount -l /put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
 rmdir /put_old # 删除空目录
 mount # 打印输出只与当前根文件系统相关的挂载目录
 ```
