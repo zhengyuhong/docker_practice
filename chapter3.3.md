@@ -24,23 +24,27 @@ UTS Namespace 主要是用来隔离主机名和域名，本文以 hostname 为�
 
 继续使用第2.2节的联合挂载系统在进行验证下 UTS Namespace 的作用
 
+1. 首先新建一个mount namespace用于挂载新根文件系统
+
 ```
-unshare --mount --pid --uts --fork /bin/bash # 新建一个命名空间
+unshare --mount --fork /bin/bash # 新建一个命名空间
 mkdir -p /root/ubuntu/fs-go/put_old # 用于挂载旧根文件系统
 pivot_root /root/ubuntu/fs-go/ /root/ubuntu/fs-go/put_old # 切换根文件系统
 umount -l /put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
 rmdir /put_old # 删除空目录
+cd /
 ```
 
-通过`hostname -b my_container_linux`重置容器主机名
+2. 然后新建一个嵌套uts namespace用于隔离主机名、域名
 
 ```
+unshare --uts --fork /bin/bash
 hostname -b MyContainerLinux
-hostname
 ```
 
-```
-domainname -b MyDomainName
-domainname
-```
+3. 最后新建一个嵌套pid namespace隔离进程空间
 
+```
+unshare --pid --fork /bin/bash
+mount -t proc proc /proc
+```
