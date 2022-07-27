@@ -173,7 +173,7 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
 
 ## Net Namespace
 
-按照第3.1节进入fs-go联合文件系统，创建Net Namespace，使用`ifconfig`查看容器发现没有网络设备，可理解为是一个没有网络的文件系统，等后续章节再补充如何让当前容器和外部环境联网互通。
+按照第3.1节进入fs-go联合文件系统，创建Net Namespace，使用`ifconfig`查看新namespace下发现没有网络设备，可理解为是一个没有网络的文件系统，等后续章节再补充如何让当前namespace和外部环境联网互通。
 
 ```
 unshare --mount --fork /bin/bash # 新建一个命名空间
@@ -184,7 +184,8 @@ rmdir /put_old # 删除空目录
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 apt-get update
 apt install net-tools
-ifconfig
+ifconfig | wc -l
+0
 ```
 
 启动如下`go run echo.go`服务
