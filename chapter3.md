@@ -19,6 +19,7 @@ Linux 内核提供了8种 Namespace，目前 Docker 只使用了其中的前6 �
 
 接下来通过一个命令行工具 unshare来演示操作Docker 使用的 6 种 Namespace 。unshare 是 util-linux 工具包中的一个工具，CentOS 7 系统默认已经集成了该工具，使用 unshare 命令可以实现创建并访问不同类型的 Namespace。
 
-- [第3.1节 Mount Namespace](chapter3.1.md)
-- [第3.2节 PID Namespace](chapter3.2.md)
+- 第3.1节 [Mount Namespace](chapter3.1.md)
+- 第3.2节 [PID Namespace](chapter3.2.md)
+- 第3.3节 [UTS Namespace](chapter3.3.md)
 
