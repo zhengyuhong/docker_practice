@@ -48,5 +48,6 @@ hostname -b MyContainerLinux
 unshare --pid --fork /bin/bash
 mount -t proc proc /proc
 hostname
+MyContainerLinux
 ```
 
