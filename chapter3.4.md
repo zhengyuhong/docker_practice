@@ -184,6 +184,8 @@ rmdir /put_old # 删除空目录
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 apt-get update
 apt install net-tools
+cd /
+unshare --net --fork /bin/bash # 新建一个命名空间
 ifconfig | wc -l
 0
 ```
