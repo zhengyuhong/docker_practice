@@ -2,38 +2,14 @@
 
 ## echo
 
- 宿主机启动如下`go run echo.go`服务
+ 宿主机启动如下`nc -lp 8888`服务，监听`8888`端口
 
 ```
 cd /root
-cat <<EOF > echo.go
-package main
-
-import (
-    "net/http"
-    "bytes"
-    "fmt"
-)
-
-func EchoHandler(writer http.ResponseWriter, request *http.Request) {
-    buf := bytes.Buffer{}
-    buf.ReadFrom(request.Body)
-    fmt.Println(buf.String())
-    fmt.Fprintf(writer, buf.String())
-}
-
-func main() {
-    http.HandleFunc("/echo", EchoHandler)
-    addr := fmt.Sprintf("0.0.0.0:8888")
-    fmt.Println("listen on 0.0.0.0:8888")
-    http.ListenAndServe(addr, nil)
-}
-EOF
-go run echo.go &
-listen on 0.0.0.0:8888
+nc -lp 8888
 ```
 
-启动一个ubuntu容器，安装`go1.18.4`，已安装可忽略此步骤
+启动一个ubuntu容器，安装`netcat-traditional`，已安装可忽略此步骤
 
 ```
 docker container run -it ubuntu:20.04 bash
@@ -50,49 +26,17 @@ deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted univer
 deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
 EOF
 apt-get update
-apt-get install wget
-cd /tmp
-wget --no-check-certificate https://go.dev/dl/go1.18.4.linux-amd64.tar.gz
-tar xfz go1.18.4.linux-amd64.tar.gz && rm go1.18.4.linux-amd64.tar.gz
-mkdir -p /usr/local/bin
-mv /tmp/go /usr/local/bin/go1.18.4
-cd /usr/local/bin/
-ln -s go1.18.4/bin/go .
-echo "export GOROOT=/usr/local/bin/go1.18.4" >> /etc/bash.bashrc
+apt-get install netcat-traditional
 ```
 
-容器启动如下`go run echo.go`服务
+容器启动如下`nc -lp 8888`服务
 
 ```
 cd /root
-cat <<EOF > echo.go
-package main
-
-import (
-    "net/http"
-    "bytes"
-    "fmt"
-)
-
-func EchoHandler(writer http.ResponseWriter, request *http.Request) {
-    buf := bytes.Buffer{}
-    buf.ReadFrom(request.Body)
-    fmt.Println(buf.String())
-    fmt.Fprintf(writer, buf.String())
-}
-
-func main() {
-    http.HandleFunc("/echo", EchoHandler)
-    addr := fmt.Sprintf("0.0.0.0:8888")
-    fmt.Println("listen on 0.0.0.0:8888")
-    http.ListenAndServe(addr, nil)
-}
-EOF
-go run echo.go &
-listen on 0.0.0.0:8888
+nc -lp 8888
 ```
 
-宿主机、容器的echo服务均监听在`8888`端口上，可见容器与宿主机的端口是相互隔离的。
+宿主机、容器nc服务均监听在`8888`端口上，可见容器与宿主机的端口是相互隔离的。
 
 ## ip addr
 
@@ -110,7 +54,7 @@ ip addr
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether fa:27:00:03:12:15 brd ff:ff:ff:ff:ff:ff
-    inet 10.12.186.147/22 brd 10.12.187.255 scope global noprefixroute eth0
+    inet 10.12.186.188/22 brd 10.12.187.255 scope global noprefixroute eth0
        valid_lft forever preferred_lft forever
     inet6 fe80::f827:ff:fe03:1215/64 scope link noprefixroute
        valid_lft forever preferred_lft forever
@@ -136,7 +80,7 @@ ip addr
        valid_lft forever preferred_lft forever
 ```
 
-进入ubuntu容器，安装`apt-get install iproute2`
+进入ubuntu容器，安装`apt-get install iproute2 `
 
 ```
 cat <<EOF > /etc/apt/sources.list
@@ -168,7 +112,7 @@ ip addr
 
 ## Net Namespace
 
-按照第3.1节进入fs-go联合文件系统，创建Net Namespace，使用`ifconfig`查看新namespace下发现没有网络设备，可理解为是一个没有网络的文件系统，等后续章节再补充如何让当前namespace和外部环境联网互通。
+按照第3.1节进入fs-go联合文件系统，创建Net Namespace，使用`ip addr`查看新namespace下仅有lo环回地址，可理解为是一个没有网络的文件系统，等后续章节再补充如何让当前namespace和外部环境联网互通。
 
 ```
 unshare --mount --fork /bin/bash # 新建一个命名空间
@@ -178,7 +122,7 @@ umount -l /put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
 rmdir /put_old # 删除空目录
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 apt-get update 
-apt-get install net-tools iproute2
+apt-get install net-tools iproute2 netcat-traditional
 cd /
 unshare --net --fork /bin/bash # 新建一个命名空间
 ip addr # 只有本地环回地址，并且这个接口是处于关闭状态的。
@@ -186,36 +130,12 @@ ip addr # 只有本地环回地址，并且这个接口是处于关闭状态的�
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 ```
 
-启动如下`go run echo.go`服务
+启动如下`nc -lp 8888`服务
 
 ```
 cd /root
-cat <<EOF > echo.go
-package main
-
-import (
-    "net/http"
-    "bytes"
-    "fmt"
-)
-
-func EchoHandler(writer http.ResponseWriter, request *http.Request) {
-    buf := bytes.Buffer{}
-    buf.ReadFrom(request.Body)
-    fmt.Println(buf.String())
-    fmt.Fprintf(writer, buf.String())
-}
-
-func main() {
-    http.HandleFunc("/echo", EchoHandler)
-    addr := fmt.Sprintf("0.0.0.0:8888")
-    fmt.Println("listen on 0.0.0.0:8888")
-    http.ListenAndServe(addr, nil)
-}
-EOF
-go run echo.go &
-listen on 0.0.0.0:8888
+nc -lp 8888
 ```
 
-宿主机、新net namespace的echo服务均监听在`8888`端口上，可见两者网络环境是相互隔离的，在搭建容器网络之前两者甚至是不连通的。
+宿主机、新net namespace的nc服务均监听在`8888`端口上，可见两者网络环境是相互隔离的，在搭建容器网络之前两者甚至是不连通的。
 
