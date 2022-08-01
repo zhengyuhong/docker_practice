@@ -1,8 +1,8 @@
 
 
-# 4.1 veth & bridge
+# 4.1 桥接网络模型
 
-本文借助 `ip netns`命令来完成对 **Network Namespace **的各种操作，使得不同**Net Namespace**彼此之间可以通信。 `ip netns`命令来自于 `iproute2`安装包，一般系统会默认安装，如果没有的话，可使用`apt-get/yum install iproute2`自行安装。
+本文借助 `ip`命令来完成对 **Network Namespace **的各种操作，使得不同**Net Namespace**彼此之间可以通信。 `ip`命令来自于 `iproute2`安装包，一般系统会默认安装，如果没有的话，可使用`apt-get/yum install iproute2`自行安装。
 
 ## Veth Pair（Virtual Ethernet Pair）
 
@@ -138,6 +138,7 @@ ip netns exec namespace1 ip link set veth2 up
 
 ```
 ip link add br0 type bridge
+ip addr add 172.18.0.3/24 dev br0
 ip link set br0 up
 ip link set dev veth1 master br0
 ip link set dev veth3 master br0
@@ -188,3 +189,20 @@ nc -lp 8888 # 启动nc服务
 msg from 172.18.0.2 
 ```
 
+在宿主机`ping` `172.18.0.1` `172.18.0.2`也是连通的
+
+```
+ping 172.18.0.2
+PING 172.18.0.1 (172.18.0.1) 56(84) bytes of data.
+64 bytes from 172.18.0.1: icmp_seq=1 ttl=64 time=0.057 ms
+
+ping 172.18.0.2
+PING 172.18.0.2 (172.18.0.2) 56(84) bytes of data.
+64 bytes from 172.18.0.2: icmp_seq=1 ttl=64 time=0.058 ms
+```
+
+
+
+## 参考
+
+https://www.lixueduan.com/post/docker/10-bridge-network/
