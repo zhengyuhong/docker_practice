@@ -16,6 +16,7 @@
   - 第3.4节 [Net Namespace](chapter3.4.md)
   - 第3.5节 [User Namespace](chapter3.5.md)
   - 第3.6节 [IPC Namespace](chapter3.6.md)
-- 第4章
+- 第4章 [虚拟网络](chapter4.md)
+  - 第4.1节 [桥接网络模型](chapter4.1.md)
 - 第5章
 
