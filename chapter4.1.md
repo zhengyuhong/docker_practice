@@ -108,6 +108,9 @@ apple
 
 ## bridge
 
+>Docker在启动时，默认会自动创建网桥设备docker0，Docker在运行时，守护进程通过docker0为Docker的容器提供网络通信服务。
+ 当Docker启动容器时，会创建一对Veth Pair，并将其中一个veth网络设备附加到网桥docker0，另一个加入容器的network namespace中。
+
 关闭上述所有终端窗口，重新登录root，删除namespace0、namespace1，连同命名空间内部的veth pair会被一同删除。
 
 ```
