@@ -12,40 +12,46 @@
 
 ## OverlayFS
 
-`OverlayFS`是联合文件系统的一种，`OverlayFS`构建于其他文件系统之上，`OverlayFS`其实更像是个挂载系统，功能是把不同的文件系统挂载到统一的路径。接下来以`ubuntu`为基础文件系统，构建分别包含`go`,`python`联合文件系统。
+`OverlayFS`是其中一种联合文件系统，`OverlayFS`构建于其他文件系统之上，`OverlayFS`其实更像是个挂载系统，功能是把不同的文件系统挂载到统一的路径。接下来以`ubuntu`为基础文件系统，构建分别包含`go`,`python`联合文件系统。
 
 ### ubuntu:20.04 基础文件系统
 
 类似上一节通过`docker save`命令导出`ubuntu`文件系统
 
-```
-pwd
-/root/ubuntu
+```shell
+mkdir ~/ubuntu
+cd ~/ubuntu
 docker pull ubuntu:20.04
 docker save ubuntu:20.04 -o ubuntu.tar
 tar xf ubuntu.tar
 tree -L 2
 .
-├── 800bc5af689f6e976edc015154816444229bb7b68c40503d3d5b35df09fd5f7e
+├── 3bc6e9f30f51d2bbf9307fc9d0bdfc30caa38cf4e3b05a714230f9a9b3381d84.json
+├── ce0735ccbbc5039603124748c7cb624862ef80812b9787522c0f4aea9406061b
 │   ├── json
 │   ├── layer.tar
 │   └── VERSION
-├── ba6acccedd2923aee4c2acc6a23780b14ed4b8a5fa4e14e252a23b846df9b6c1.json
 ├── manifest.json
 ├── repositories
-└── ubutnu.tar
-mkdir fs && cd fs
-tar xf ../800bc5af689f6e976edc015154816444229bb7b68c40503d3d5b35df09fd5f7e/layer.tar
+└── ubuntu.tar
+1 directory, 7 files
+
+mkdir rootfs
+cd rootfs
+tar xf ../*/layer.tar
+ls
+bin  boot  dev  etc  home  lib  lib32  lib64  libx32  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
 ```
 
 ### ubuntu:python 文件系统
 
-接下来以`/root/ubuntu/fs/`为基础文件系统，在此之上添加`python`环境
+接下来以`/root/ubuntu/rootfs/`为基础文件系统，在此之上添加`python`环境
 
-```
-mkdir /root/ubuntu/python # 存放增量的python文件系统，初始化为空目录
-mkdir /root/ubuntu/fs-python # 挂载基础文件系统fs + 增量python文件系统的联合文件系统
-mkdir /root/ubuntu/fs-python-work # 用于存放挂载后的临时文件和间接文件
+```shell
+mkdir -p /root/ubuntu/rootfs-python
+mkdir -p /root/ubuntu/rootfs-python/diff # 存放增量的python文件系统
+mkdir -p /root/ubuntu/rootfs-python/merged # 挂载基础文件系统rootfs + 增量python文件系统的联合文件系统
+mkdir -p /root/ubuntu/rootfs-python/work # 用于存放挂载后的临时文件和间接文件
 ```
 
 >mount -t overlay overlay -o lowerdir=lower1:lower2:...,upperdir=upper,workdir=work merged
@@ -56,16 +62,16 @@ mkdir /root/ubuntu/fs-python-work # 用于存放挂载后的临时文件和间�
 >- workdir：用来存放挂载后的临时文件与间接文件。
 
 ```shell
-mount -t overlay overlay -o lowerdir=/root/ubuntu/fs/,upperdir=/root/ubuntu/python,workdir=/root/ubuntu/fs-python-work /root/ubuntu/fs-python
-mount|grep fs-python # 查看挂载情况
-overlay on /root/ubuntu/fs-python type overlay (rw,relatime,lowerdir=/root/ubuntu/fs/,upperdir=/root/ubuntu/python,workdir=/root/ubuntu/fs-python-work)
+mount -t overlay overlay -o lowerdir=/root/ubuntu/rootfs/,upperdir=/root/ubuntu/rootfs-python/diff,workdir=/root/ubuntu/rootfs-python/work /root/ubuntu/rootfs-python/merged
+mount|grep rootfs-python # 查看挂载情况
+overlay on /root/ubuntu/rootfs-python/merged type overlay (rw,relatime,lowerdir=/root/ubuntu/rootfs/,upperdir=/root/ubuntu/rootfs-python/diff,workdir=/root/ubuntu/rootfs-python/work)
 ```
 
-进入`/root/ubuntu/fs-python`联合挂载点，切换根目录，更新apt源，安装python
+进入`/root/ubuntu/rootfs-python/merged`联合挂载点，切换根目录，更新apt源，安装python
 
 ```shell
-cd /root/ubuntu/fs-python
-chroot .
+cd /root/ubuntu/rootfs-python/merged
+chroot . sh
 mount -t proc proc /proc
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 cat <<EOF > /etc/apt/sources.list
@@ -85,43 +91,37 @@ apt-get update
 apt-get install python
 ```
 
-安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/fs-python`联合挂载系统新增的python软件包已添加到`root/ubuntu/python`，而`/root/ubuntu/fs`是基础文件系统，只读不写，保持不变。
+安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/rootfs-python/merged`联合挂载系统新增的python软件包已添加到`root/ubuntu/rootfs-python/diff`，而`/root/ubuntu/rootfs`是基础文件系统，只读不写，保持不变。
 
 ```
-cd /root/ubuntu
-du -sh *
-72M	800bc5af689f6e976edc015154816444229bb7b68c40503d3d5b35df09fd5f7e
-4.0K	ba6acccedd2923aee4c2acc6a23780b14ed4b8a5fa4e14e252a23b846df9b6c1.json
-78M	fs
-180M	fs-python
-8.0K	fs-python-work
-4.0K	manifest.json
-103M	python
-4.0K	repositories
-72M	ubutnu.tar
+cd /root/ubuntu/
+du -sh rootfs rootfs-python/diff rootfs-python/work rootfs-python/merged
+78M	rootfs
+103M	rootfs-python/diff
+8.0K	rootfs-python/work
+180M	rootfs-python/merged
 ```
 
 ### ubuntu:go 文件系统
 
-继续以`/root/ubuntu/fs/`为基础文件系统，在此之上添加`go`环境
+继续以`/root/ubuntu/rootfs/`为基础文件系统，在此之上添加`go`环境
 
 ```
-mkdir /root/ubuntu/go # 存放增量的go文件系统，初始化为空目录
-mkdir /root/ubuntu/fs-go # 挂载基础文件系统fs + 增量go文件系统的联合文件系统
-mkdir /root/ubuntu/fs-go-work # 用于存放挂载后的临时文件和间接文件
+mkdir -p /root/ubuntu/rootfs-go/diff # 存放增量的go文件系统，初始化为空目录
+mkdir -p /root/ubuntu/rootfs-go/merged # 挂载基础文件系统rootfs + 增量go文件系统的联合文件系统
+mkdir -p /root/ubuntu/rootfs-go/work # 用于存放挂载后的临时文件和间接文件
 ```
 
 ```
-mount -t overlay overlay -o lowerdir=/root/ubuntu/fs/,upperdir=/root/ubuntu/go,workdir=/root/ubuntu/fs-go-work /root/ubuntu/fs-go
-mount|grep fs-go # 查看挂载情况
-overlay on /root/ubuntu/fs-go type overlay (rw,relatime,lowerdir=/root/ubuntu/fs/,upperdir=/root/ubuntu/go,workdir=/root/ubuntu/fs-go-work)
+mount -t overlay overlay -o lowerdir=/root/ubuntu/rootfs/,upperdir=/root/ubuntu/rootfs-go/diff,workdir=/root/ubuntu/rootfs-go/work /root/ubuntu/rootfs-go/merged
+mount|grep rootfs-go # 查看挂载情况
 ```
 
-进入`/root/ubuntu/fs-go`联合挂载点，切换根目录，更新apt源，安装wget，再下载go二进制包
+进入`/root/ubuntu/rootfs-go/merged`联合挂载点，切换根目录，更新apt源，安装wget，再下载go二进制包
 
 ```
-cd /root/ubuntu/fs-go
-chroot .
+cd /root/ubuntu/rootfs-go/merged
+chroot . sh
 mount -t proc proc /proc
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 cat <<EOF > /etc/apt/sources.list
@@ -149,23 +149,15 @@ ln -s go1.18.4/bin/go .
 echo "export GOROOT=/usr/local/bin/go1.18.4" >> /etc/bash.bashrc
 ```
 
-安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/fs-go`联合挂载系统新增的python软件包已添加到`root/ubuntu/go`，而`/root/ubuntu/fs`是基础文件系统，只读不写，保持不变。
+安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/rootfs-go/merged`联合挂载系统新增的python软件包已添加到`root/ubuntu/rootfs-go/diff`，而`/root/ubuntu/rootfs`是基础文件系统，只读不写，保持不变。
 
 ```
 cd /root/ubuntu
-du -sh *
-72M	800bc5af689f6e976edc015154816444229bb7b68c40503d3d5b35df09fd5f7e
-4.0K	ba6acccedd2923aee4c2acc6a23780b14ed4b8a5fa4e14e252a23b846df9b6c1.json
-78M	fs
-1.1G	fs-go
-8.0K	fs-go-work
-180M	fs-python
-8.0K	fs-python-work
-970M	go
-4.0K	manifest.json
-103M	python
-4.0K	repositories
-72M	ubutnu.tar
+du -sh rootfs rootfs-go/diff rootfs-go/work rootfs-go/merged
+78M	rootfs
+522M	rootfs-go/diff
+8.0K	rootfs-go/work
+599M	rootfs-go/merged
 ```
 
 ### ubuntu:go_python 文件系统
@@ -173,48 +165,38 @@ du -sh *
 假设现在需要一个`go+python`的ubuntu文件系统，那可以基于上述`ubuntu:go`添加增量的`python`文件系统（当然也可以基于`ubuntu:python`添加增量的`go`文件系统）。
 
 ```
-cd /root/ubuntu
-mkdir /root/ubuntu/go_python # 存放增量的python文件系统，初始化为空目录
-mkdir /root/ubuntu/fs-go_python # 挂载基础文件系统fs + 增量go文件系统 + 增量python文件系统的联合文件系统
-mkdir /root/ubuntu/fs-go_python-work # 用于存放挂载后的临时文件和间接文件
+mkdir -p /root/ubuntu/rootfs-go_python/diff # 存放增量的python文件系统，初始化为空目录
+mkdir -p /root/ubuntu/rootfs-go_python/merged # 挂载基础文件系统rootfs + 增量go文件系统的联合文件系统 + 增量python文件系统的联合文件系统
+mkdir -p /root/ubuntu/rootfs-go_python/work # 用于存放挂载后的临时文件和间接文件
 ```
 
 ```
-mount -t overlay overlay -o lowerdir=/root/ubuntu/go/:/root/ubuntu/fs/,upperdir=/root/ubuntu/go_python,workdir=/root/ubuntu/fs-go_python-work /root/ubuntu/fs-go_python
-mount|grep fs-go_python # 查看挂载情况
+mount -t overlay overlay -o lowerdir=/root/ubuntu/rootfs-go/diff:/root/ubuntu/rootfs/,upperdir=/root/ubuntu/rootfs-go_python/diff,workdir=/root/ubuntu/rootfs-go_python/work /root/ubuntu/rootfs-go_python/merged
+mount|grep rootfs-go_python # 查看挂载情况
 overlay on /root/ubuntu/fs-go_python type overlay (rw,relatime,lowerdir=/root/ubuntu/go/:/root/ubuntu/fs,upperdir=/root/ubuntu/go_python,workdir=/root/ubuntu/fs-go_python-work)
 ```
 
-仔细观察上述`mount`命令，`lowerdir`包含两个路径`/root/ubuntu/go/:/root/ubuntu/fs/`，越底层越靠右侧。
+仔细观察上述`mount`命令，`lowerdir`包含两个路径`/root/ubuntu/rootfs-go/diff:/root/ubuntu/rootfs/`，越底层越靠右侧。
 
-进入`/root/ubuntu/fs-go_python`联合挂载点，切换根目录，安装`python`
+进入`/root/ubuntu/rootfs-go_python/merged`联合挂载点，切换根目录，安装`python`
 
 ```
-cd /root/ubuntu/fs-go_python
-chroot .
+cd /root/ubuntu/rootfs-go_python/merged
+chroot . sh
 mount -t proc proc /proc
 apt-get install python
 ```
 
-安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/fs-go_python`联合挂载系统新增的python软件包已添加到`root/ubuntu/go_python`，而`/root/ubuntu/go/:/root/ubuntu/fs/`是底层基础文件系统，只读不写，保持不变。
+安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/rootfs-go_python/merged`联合挂载系统新增的python软件包已添加到`root/ubuntu/rootfs-go_python/diff`，而`/root/ubuntu/rootfs-go/diff:/root/ubuntu/rootfs/`是底层基础文件系统，只读不写，保持不变。
 
 ```shell
-du -sh *
-72M	800bc5af689f6e976edc015154816444229bb7b68c40503d3d5b35df09fd5f7e
-4.0K	ba6acccedd2923aee4c2acc6a23780b14ed4b8a5fa4e14e252a23b846df9b6c1.json
-78M	fs
-1.1G	fs-go
-1.1G	fs-go_python
-8.0K	fs-go_python-work
-8.0K	fs-go-work
-180M	fs-python
-8.0K	fs-python-work
-970M	go
-34M	go_python
-4.0K	manifest.json
-103M	python
-4.0K	repositories
-72M	ubutnu.tar
+cd /root/ubuntu/
+du -sh rootfs rootfs-go/diff rootfs-go_python/diff rootfs-go_python/work rootfs-go_python/merged
+78M	rootfs
+522M	rootfs-go/diff
+34M	rootfs-go_python/diff
+8.0K	rootfs-go_python/work
+631M	rootfs-go_python/merged
 ```
 
 ## 总结
