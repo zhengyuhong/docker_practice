@@ -19,8 +19,8 @@
 类似上一节通过`docker save`命令导出`ubuntu`文件系统
 
 ```shell
-mkdir ~/ubuntu
-cd ~/ubuntu
+mkdir /root/ubuntu
+cd /root/ubuntu
 docker pull ubuntu:20.04
 docker save ubuntu:20.04 -o ubuntu.tar
 tar xf ubuntu.tar
