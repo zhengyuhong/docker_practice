@@ -2,11 +2,11 @@
 
 ## namespace
 
-进入第2.2节提及的`/root/ubuntu/fs-go`联合挂载点，切换根文件系统
+进入第2.2节提及的`/root/ubuntu/rootfs-go/merged`联合挂载点，切换根文件系统
 
 ```
-cd /root/ubuntu/fs-go
-chroot .
+cd /root/ubuntu/rootfs-go/merged
+chroot . sh
 mount # 打印输出只与当前根文件系统相关的挂载目录，不继承复制旧根文件系统挂载目录
 ```
 
@@ -21,23 +21,46 @@ mount -t tmpfs -o size=20m tmpfs /mnt/tmpfs
 
 ```
 mount | grep "/mnt/tmpfs"
-tmpfs on /root/ubuntu/fs-go/mnt/tmpfs type tmpfs (rw,relatime,size=20480k)
+tmpfs on /root/ubuntu/rootfs-go/merged/mnt/tmpfs type tmpfs (rw,relatime,size=20480k,inode64)
+umount /mnt/tmpfs
 ```
 
 **Mount Namespace** 是 Linux 内核实现的第一个 Namespace，从内核的 2.4.19 版本开始加入。它可以用来隔离不同的进程或进程组看到的挂载点。可以实现在不同的进程中看到不同的挂载目录。使用 Mount Namespace 可以实现容器内只能看到自己的挂载信息，在容器内的挂载操作不会影响主机的挂载目录。
 
 使用以下命令创建一个 bash 进程并且新建一个 Mount Namespace
 
+```shell
+unshare --mount --fork /bin/bash # --fork fork出一个新的进程，创建一个mount命名空间，再执行/bin/bash
 ```
-unshare --mount --fork /bin/bash
-```
+
+>加不加 `--fork` 区别如下：
+>
+>```
+>root@HomeDeb:~# unshare -u bash
+>root@HomeDeb:~# ps --forest
+>  PID TTY          TIME CMD
+> 8134 pts/10   00:00:00 bash
+> 9560 pts/10   00:00:00  \_ bash
+> 9562 pts/10   00:00:00      \_ ps
+>root@HomeDeb:~# exit
+>exit
+>root@HomeDeb:~# unshare -u -f bash
+>root@HomeDeb:~# ps --forest
+>  PID TTY          TIME CMD
+> 8134 pts/10   00:00:00 bash
+> 9563 pts/10   00:00:00  \_ unshare
+> 9564 pts/10   00:00:00      \_ bash
+> 9566 pts/10   00:00:00          \_ ps
+>```
+>
+>参考 https://zhuanlan.zhihu.com/p/369510683
 
 执行完上述命令后，这时我们已经在主机上创建了一个新的 Mount Namespace，并且当前命令行窗口加入了新创建的 Mount Namespace。下面我通过一个例子来验证下，在独立的 Mount Namespace 内创建挂载目录是不影响主机的挂载目录。
 
 在 `/mnt` 下创建一个目录，使用 mount 命令挂载一个 tmpfs 类型的目录。
 
 ```
-mkdir /mnt/tmpfs
+mkdir -p /mnt/tmpfs
 mount -t tmpfs -o size=40m tmpfs /mnt/tmpfs
 ```
 
@@ -55,10 +78,10 @@ tmpfs on /mnt/tmpfs type tmpfs (rw,relatime,size=40960k)
 从上文可知，使用`chroot`切换根文件系统后，新根文件系统不继承复制旧根文件系统挂载目录，但是在新根文件系统进行挂载会影响旧根文件系统，此时只需要再创建一个Mount Namespace即可隔离新旧文件系统，完整操作如下所示。
 
 ```
-cd /root/ubuntu/fs-go
-chroot . # 切换新根文件系统
+cd /root/ubuntu/rootfs-go/merged
+chroot . sh # 切换新根文件系统
 mount # 打印输出只与当前根文件系统相关的挂载目录，不继承复制旧根文件系统挂载目录
-unshare --mount --fork /bin/bash # 新建一个 Mount Namespace
+unshare --mount --fork /bin/bash # 新建一个 Mount Namespace，与主机挂载目录相互隔离
 ```
 
 ## pivot_root
@@ -68,14 +91,15 @@ unshare --mount --fork /bin/bash # 新建一个 Mount Namespace
 ```shell
 unshare --mount --fork /bin/bash
 mount # 打印输出旧Namespace的挂载目录信息
+exit
 ```
 
 除了 `chroot`，Linux 还提供了 `pivot_root` 系统调用能够将把整个根文件系统切换到一个新的根目录，结合`unshare`、`pivot_root`、`umount -l`实现根文件系统切换和隔离
 
-```
-unshare --mount --fork /bin/bash # 新建一个命名空间
-mkdir -p /root/ubuntu/fs-go/put_old # 用于挂载旧根文件系统
-pivot_root /root/ubuntu/fs-go/ /root/ubuntu/fs-go/put_old # 切换根文件系统
+```shell
+unshare --mount --fork /bin/bash # 新建一个挂载命名空间
+mkdir -p /root/ubuntu/rootfs-go/merged/put_old # 用于挂载旧根文件系统
+pivot_root /root/ubuntu/rootfs-go/merged /root/ubuntu/rootfs-go/merged/put_old # 切换根文件系统
 mount -t proc proc /proc
 umount -l /put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
 rmdir /put_old # 删除空目录
