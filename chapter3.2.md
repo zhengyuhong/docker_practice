@@ -20,12 +20,12 @@ root@7f1b338325d2:/# ps
 
 ## PID Namespace
 
-进入第2.2节提及的`/root/ubuntu/fs-go`联合挂载点，切换根文件系统
+进入第2.2节提及的`/root/ubuntu/rootfs-go/merged`联合挂载点，切换根文件系统
 
 ```shell
 unshare --mount --fork /bin/bash # 新建一个命名空间
-mkdir -p /root/ubuntu/fs-go/put_old # 用于挂载旧根文件系统
-pivot_root /root/ubuntu/fs-go/ /root/ubuntu/fs-go/put_old # 切换根文件系统
+mkdir -p /root/ubuntu/rootfs-go/merged/put_old # 用于挂载旧根文件系统
+pivot_root /root/ubuntu/rootfs-go/merged /root/ubuntu/rootfs-go/merged/put_old # 切换根文件系统
 umount -l /put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
 rmdir /put_old # 删除空目录
 top # 输出新旧文件系统下所运行的进程信息
@@ -35,8 +35,8 @@ top # 输出新旧文件系统下所运行的进程信息
 
 ```shell
 unshare --mount --pid --fork /bin/bash # 新建一个命名空间
-mkdir -p /root/ubuntu/fs-go/put_old # 用于挂载旧根文件系统
-pivot_root /root/ubuntu/fs-go/ /root/ubuntu/fs-go/put_old # 切换根文件系统
+mkdir -p /root/ubuntu/rootfs-go/merged/put_old # 用于挂载旧根文件系统
+pivot_root /root/ubuntu/rootfs-go/merged/ /root/ubuntu/rootfs-go/merged/put_old # 切换根文件系统
 umount -l /put_old # 隐藏旧根文件系统的挂载，/put_old变成空目录
 rmdir /put_old # 删除空目录
 mount -t proc proc /proc # PID namespace变更后重新把内存中的系统状态、进程信息挂载到/proc
