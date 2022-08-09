@@ -164,13 +164,13 @@ du -sh rootfs rootfs-go/diff rootfs-go/work rootfs-go/merged
 
 假设现在需要一个`go+python`的ubuntu文件系统，那可以基于上述`ubuntu:go`添加增量的`python`文件系统（当然也可以基于`ubuntu:python`添加增量的`go`文件系统）。
 
-```
+```shell
 mkdir -p /root/ubuntu/rootfs-go_python/diff # 存放增量的python文件系统，初始化为空目录
 mkdir -p /root/ubuntu/rootfs-go_python/merged # 挂载基础文件系统rootfs + 增量go文件系统的联合文件系统 + 增量python文件系统的联合文件系统
 mkdir -p /root/ubuntu/rootfs-go_python/work # 用于存放挂载后的临时文件和间接文件
 ```
 
-```
+```shell
 mount -t overlay overlay -o lowerdir=/root/ubuntu/rootfs-go/diff:/root/ubuntu/rootfs/,upperdir=/root/ubuntu/rootfs-go_python/diff,workdir=/root/ubuntu/rootfs-go_python/work /root/ubuntu/rootfs-go_python/merged
 mount|grep rootfs-go_python # 查看挂载情况
 overlay on /root/ubuntu/fs-go_python type overlay (rw,relatime,lowerdir=/root/ubuntu/go/:/root/ubuntu/fs,upperdir=/root/ubuntu/go_python,workdir=/root/ubuntu/fs-go_python-work)
