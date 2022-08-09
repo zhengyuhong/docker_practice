@@ -30,9 +30,11 @@ umount /mnt/tmpfs
 使用以下命令创建一个 bash 进程并且新建一个 Mount Namespace
 
 ```shell
-unshare --mount --fork /bin/bash # --fork fork出一个新的进程，创建一个mount命名空间，再执行/bin/bash
+unshare --mount --fork /bin/bash # fork一个新的进程，创建一个mount命名空间，执行/bin/bash
 ```
 
+>执行unshare的进程fork一个新的子进程，在子进程里执行unshare --mount，最后执行/bin/bash
+>
 >加不加 `--fork` 区别如下：
 >
 >```
