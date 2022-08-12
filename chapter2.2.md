@@ -36,8 +36,8 @@ tree -L 2
 └── ubuntu.tar
 1 directory, 7 files
 
-mkdir rootfs
-cd rootfs
+mkdir -p /root/ubuntu/rootfs
+cd /root/ubuntu/rootfs
 tar xf ../*/layer.tar
 ls
 bin  boot  dev  etc  home  lib  lib32  lib64  libx32  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
@@ -89,11 +89,12 @@ EOF
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 apt-get update
 apt-get install python
+exit
 ```
 
 安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/rootfs-python/merged`联合挂载系统新增的python软件包已添加到`root/ubuntu/rootfs-python/diff`，而`/root/ubuntu/rootfs`是基础文件系统，只读不写，保持不变。
 
-```
+```shell
 cd /root/ubuntu/
 du -sh rootfs rootfs-python/diff rootfs-python/work rootfs-python/merged
 78M	rootfs
@@ -106,20 +107,20 @@ du -sh rootfs rootfs-python/diff rootfs-python/work rootfs-python/merged
 
 继续以`/root/ubuntu/rootfs/`为基础文件系统，在此之上添加`go`环境
 
-```
+```shell
 mkdir -p /root/ubuntu/rootfs-go/diff # 存放增量的go文件系统，初始化为空目录
 mkdir -p /root/ubuntu/rootfs-go/merged # 挂载基础文件系统rootfs + 增量go文件系统的联合文件系统
 mkdir -p /root/ubuntu/rootfs-go/work # 用于存放挂载后的临时文件和间接文件
 ```
 
-```
+```shell
 mount -t overlay overlay -o lowerdir=/root/ubuntu/rootfs/,upperdir=/root/ubuntu/rootfs-go/diff,workdir=/root/ubuntu/rootfs-go/work /root/ubuntu/rootfs-go/merged
 mount|grep rootfs-go # 查看挂载情况
 ```
 
 进入`/root/ubuntu/rootfs-go/merged`联合挂载点，切换根目录，更新apt源，安装wget，再下载go二进制包
 
-```
+```shell
 cd /root/ubuntu/rootfs-go/merged
 chroot . sh
 mount -t proc proc /proc
@@ -147,11 +148,12 @@ mv /tmp/go /usr/local/bin/go1.18.4
 cd /usr/local/bin/
 ln -s go1.18.4/bin/go .
 echo "export GOROOT=/usr/local/bin/go1.18.4" >> /etc/bash.bashrc
+exit
 ```
 
 安装完成后，执行`exit`，退出`chroot`，查看`du -sh *`可见`/root/ubuntu/rootfs-go/merged`联合挂载系统新增的python软件包已添加到`root/ubuntu/rootfs-go/diff`，而`/root/ubuntu/rootfs`是基础文件系统，只读不写，保持不变。
 
-```
+```shell
 cd /root/ubuntu
 du -sh rootfs rootfs-go/diff rootfs-go/work rootfs-go/merged
 78M	rootfs
