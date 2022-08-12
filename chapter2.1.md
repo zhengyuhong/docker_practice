@@ -34,8 +34,8 @@ bin  dev  etc  FLAG  home  lib  lib64  proc  root  sys  tmp  usr  var
 每一个容器都有一套独立文件系统，我们还是以`busybox`为例子，这里不打算重新编译生成`busybox`文件系统，我们直接通过`docker save`命令导出镜像`busybox:glibc`内部的文件系统
 
 ```shell
-mkdir -p ~/busybox
-cd ~/busybox
+mkdir -p /root/busybox
+cd /root/busybox
 docker save busybox:glibc -o busybox.tar
 tar xf busybox.tar
 tree -L 2
@@ -51,8 +51,8 @@ tree -L 2
 
 1 directory, 7 files
 
-mkdir rootfs
-cd rootfs
+mkdir -p /root/busybox/rootfs
+cd /root/busybox/rootfs
 tar xf ../*/layer.tar
 ls
 bin  dev  etc  home  lib  lib64  root  tmp  usr  var
