@@ -5,4 +5,4 @@
 - ubuntu 20.04
 - Linux Kernel 5.15.0
 - Docker 20.10
-- Go 1.18.4
+- Go 1.19
